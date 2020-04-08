@@ -1,54 +1,52 @@
-const Post = require("../models/post");
+const Event = require("../models/event");
 const formidable = require("formidable");
 const fs = require("fs");
 const _ = require("lodash");
 
-exports.postById = (req, res, next, id) => {
-  Post.findById(id)
+exports.eventById = (req, res, next, id) => {
+  Event.findById(id)
     .populate("postedBy", "_id name")
     .populate("comments.postedBy", "_id name")
     .populate("postedBy", "_id name role")
     .select("_id title body created likes comments photo")
-    .exec((err, post) => {
-      if (err || !post) {
+    .exec((err, event) => {
+      if (err || !event) {
         return res.status(400).json({
           error: err
         });
       }
-      req.post = post;
+      req.event = event;
       next();
     });
 };
 
-/*
-exports.getPosts = (req, res) => {
-    const posts = Post.find()
-        .populate("postedBy", "_id name")
-        .populate("comments", "text created")
-        .populate("comments.postedBy", "_id name")
-        .select("_id title body created likes")
-        .sort({ created: -1 })
-        .then(posts => {
-            res.json(posts);
-        })
-        .catch(err => console.log(err));
-};
-*/
+// exports.getEvents = (req, res) => {
+//   const events = Event.find()
+//     .populate("postedBy", "_id name")
+//     .populate("comments", "text created")
+//     .populate("comments.postedBy", "_id name")
+//     .select("_id title body created likes")
+//     .sort({ created: -1 })
+//     .then(events => {
+//       res.json(events);
+//     })
+//     .catch(err => console.log(err));
+// };
 
 // with pagination
-exports.getPosts = async (req, res) => {
+exports.getEvents = async (req, res) => {
   // get current page from req.query or use default value of 1
   const currentPage = req.query.page || 1;
-  // return 3 posts per page
+  // return 3 eventss per page
   const perPage = 6;
   let totalItems;
 
-  const posts = await Post.find()
-    // countDocuments() gives you total count of posts
+  const events = await Event.find()
+    // countDocuments() gives you total count of events
     .countDocuments()
     .then(count => {
       totalItems = count;
-      return Post.find()
+      return Event.find()
         .skip((currentPage - 1) * perPage)
         .populate("comments", "text created")
         .populate("comments.postedBy", "_id name")
@@ -57,13 +55,13 @@ exports.getPosts = async (req, res) => {
         .limit(perPage)
         .sort({ created: -1 });
     })
-    .then(posts => {
-      res.status(200).json(posts);
+    .then(events => {
+      res.status(200).json(events);
     })
     .catch(err => console.log(err));
 };
 
-exports.createPost = (req, res, next) => {
+exports.createEvent = (req, res, next) => {
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
@@ -72,17 +70,17 @@ exports.createPost = (req, res, next) => {
         error: "Image could not be uploaded"
       });
     }
-    let post = new Post(fields);
+    let event = new Event(fields);
 
     req.profile.hashed_password = undefined;
     req.profile.salt = undefined;
-    post.postedBy = req.profile;
+    event.postedBy = req.profile;
 
     if (files.photo) {
-      post.photo.data = fs.readFileSync(files.photo.path);
-      post.photo.contentType = files.photo.type;
+      event.photo.data = fs.readFileSync(files.photo.path);
+      event.photo.contentType = files.photo.type;
     }
-    post.save((err, result) => {
+    event.save((err, result) => {
       if (err) {
         return res.status(400).json({
           error: err
@@ -93,26 +91,27 @@ exports.createPost = (req, res, next) => {
   });
 };
 
-exports.postsByUser = (req, res) => {
-  Post.find({ postedBy: req.profile._id })
+exports.eventsByUser = (req, res) => {
+  Event.find({ postedBy: req.profile._id })
     .populate("postedBy", "_id name")
     .select("_id title body created likes")
     .sort("_created")
-    .exec((err, posts) => {
+    .exec((err, events) => {
       if (err) {
         return res.status(400).json({
           error: err
         });
       }
-      res.json(posts);
+      res.json(events);
     });
 };
 
 exports.isPoster = (req, res, next) => {
-  let sameUser = req.post && req.auth && req.post.postedBy._id == req.auth._id;
-  let adminUser = req.post && req.auth && req.auth.role === "admin";
+  let sameUser =
+    req.event && req.auth && req.event.postedBy._id == req.auth._id;
+  let adminUser = req.event && req.auth && req.auth.role === "admin";
 
-  // console.log("req.post ", req.post, " req.auth ", req.auth);
+  // console.log("req.event ", req.event, " req.auth ", req.auth);
   // console.log("SAMEUSER: ", sameUser, " ADMINUSER: ", adminUser);
 
   let isPoster = sameUser || adminUser;
@@ -125,21 +124,21 @@ exports.isPoster = (req, res, next) => {
   next();
 };
 
-// exports.updatePost = (req, res, next) => {
-//     let post = req.post;
-//     post = _.extend(post, req.body);
-//     post.updated = Date.now();
-//     post.save(err => {
-//         if (err) {
-//             return res.status(400).json({
-//                 error: err
-//             });
-//         }
-//         res.json(post);
-//     });
+// exports.updateEvent = (req, res, next) => {
+//   let event = req.event;
+//   event = _.extend(event, req.body);
+//   event.updated = Date.now();
+//   event.save(err => {
+//     if (err) {
+//       return res.status(400).json({
+//         error: err
+//       });
+//     }
+//     res.json(event);
+//   });
 // };
 
-exports.updatePost = (req, res, next) => {
+exports.updateEvent = (req, res, next) => {
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
@@ -148,53 +147,53 @@ exports.updatePost = (req, res, next) => {
         error: "Photo could not be uploaded"
       });
     }
-    // save post
-    let post = req.post;
-    post = _.extend(post, fields);
-    post.updated = Date.now();
+    // save event
+    let event = req.event;
+    event = _.extend(event, fields);
+    event.updated = Date.now();
 
     if (files.photo) {
-      post.photo.data = fs.readFileSync(files.photo.path);
-      post.photo.contentType = files.photo.type;
+      event.photo.data = fs.readFileSync(files.photo.path);
+      event.photo.contentType = files.photo.type;
     }
 
-    post.save((err, result) => {
+    event.save((err, result) => {
       if (err) {
         return res.status(400).json({
           error: err
         });
       }
-      res.json(post);
+      res.json(event);
     });
   });
 };
 
-exports.deletePost = (req, res) => {
-  let post = req.post;
-  post.remove((err, post) => {
+exports.deleteEvent = (req, res) => {
+  let event = req.event;
+  event.remove((err, event) => {
     if (err) {
       return res.status(400).json({
         error: err
       });
     }
     res.json({
-      message: "Post deleted successfully"
+      message: "Event deleted successfully"
     });
   });
 };
 
 exports.photo = (req, res, next) => {
-  res.set("Content-Type", req.post.photo.contentType);
-  return res.send(req.post.photo.data);
+  res.set("Content-Type", req.event.photo.contentType);
+  return res.send(req.event.photo.data);
 };
 
-exports.singlePost = (req, res) => {
-  return res.json(req.post);
+exports.singleEvent = (req, res) => {
+  return res.json(req.event);
 };
 
 exports.like = (req, res) => {
-  Post.findByIdAndUpdate(
-    req.body.postId,
+  Event.findByIdAndUpdate(
+    req.body.eventId,
     { $push: { likes: req.body.userId } },
     { new: true }
   ).exec((err, result) => {
@@ -209,8 +208,8 @@ exports.like = (req, res) => {
 };
 
 exports.unlike = (req, res) => {
-  Post.findByIdAndUpdate(
-    req.body.postId,
+  Event.findByIdAndUpdate(
+    req.body.eventId,
     { $pull: { likes: req.body.userId } },
     { new: true }
   ).exec((err, result) => {
@@ -228,8 +227,8 @@ exports.comment = (req, res) => {
   let comment = req.body.comment;
   comment.postedBy = req.body.userId;
 
-  Post.findByIdAndUpdate(
-    req.body.postId,
+  Event.findByIdAndUpdate(
+    req.body.eventId,
     { $push: { comments: comment } },
     { new: true }
   )
@@ -249,8 +248,8 @@ exports.comment = (req, res) => {
 exports.uncomment = (req, res) => {
   let comment = req.body.comment;
 
-  Post.findByIdAndUpdate(
-    req.body.postId,
+  Event.findByIdAndUpdate(
+    req.body.eventId,
     { $pull: { comments: { _id: comment._id } } },
     { new: true }
   )
@@ -270,12 +269,12 @@ exports.uncomment = (req, res) => {
 // exports.updateComment = async (req, res) => {
 //     const comment = req.body.comment;
 //     // const id = req.body.id;
-//     const postId = req.body.postId;
+//     const eventId = req.body.eventId;
 //     const userId = req.body.userId;
 //     // comment.postedBy = req.body.userId;
 
-//     const result = await Post.findByIdAndUpdate(
-//         postId,
+//     const result = await Event.findByIdAndUpdate(
+//         eventId,
 //         {
 //             $set: {
 //                 comments: {
@@ -295,7 +294,7 @@ exports.uncomment = (req, res) => {
 exports.updateComment = (req, res) => {
   let comment = req.body.comment;
 
-  Post.findByIdAndUpdate(req.body.postId, {
+  Event.findByIdAndUpdate(req.body.eventId, {
     $pull: { comments: { _id: comment._id } }
   }).exec((err, result) => {
     if (err) {
@@ -303,8 +302,8 @@ exports.updateComment = (req, res) => {
         error: err
       });
     } else {
-      Post.findByIdAndUpdate(
-        req.body.postId,
+      Event.findByIdAndUpdate(
+        req.body.eventId,
         { $push: { comments: comment, updated: new Date() } },
         { new: true }
       )
@@ -328,14 +327,14 @@ exports.updateComment = (req, res) => {
 exports.updateComment = async (req, res) => {
   const commentId = req.body.id;
   const comment = req.body.comment;
- 
-  const updatedComment = await Post.updateOne(
+
+  const updatedComment = await Event.updateOne(
     { comments: { $elemMatch: { _id: commentId } } },
     { $set: { "comments.$.text": comment } }
   );
   if (!updatedComment)
     res.status(404).json({ message: Language.fa.NoPostFound });
- 
+
   res.json(updatedComment);
 };
 
@@ -343,24 +342,24 @@ exports.updateComment = async (req, res) => {
 exports.updateComment = async (req, res) => {
   const commentId = req.body.id;
   const comment = req.body.comment;
-  const postId = req.params.id;
- 
-  const post = await Post.findById(postId);
-  const com = post.comments.map(comment => comment.id).indexOf(commentId);
-  const singleComment = post.comments.splice(com, 1);
+  const eventId = req.params.id;
+
+  const event = await Event.findById(eventId);
+  const com = event.comments.map(comment => comment.id).indexOf(commentId);
+  const singleComment = event.comments.splice(com, 1);
   let authorized = singleComment[0].commentedBy;
   console.log("Security Check Passed ?", req.auth._id == authorized);
- 
+
   if (authorized != req.auth._id)
     res.status(401).json({ mesage: Language.fa.UnAuthorized });
- 
-  const updatedComment = await Post.updateOne(
+
+  const updatedComment = await Event.updateOne(
     { comments: { $elemMatch: { _id: commentId } } },
     { $set: { "comments.$.text": comment } }
   );
   if (!updatedComment)
-    res.status(404).json({ message: Language.fr.NoPostFound });
- 
+    res.status(404).json({ message: Language.fr.NoEventFound });
+
   res.json({ message: Language.fr.CommentUpdated });
 };
  */
