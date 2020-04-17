@@ -79,10 +79,10 @@ exports.forgotPassword = (req, res) => {
             subject: 'Password Reset Instructions',
             text: `Please use the following link to reset your password: ${
                 process.env.CLIENT_URL
-            }/reset-password/${token}`,
+                }/reset-password/${token}`,
             html: `<p>Please use the following link to reset your password:</p> <p>${
                 process.env.CLIENT_URL
-            }/reset-password/${token}</p>`
+                }/reset-password/${token}</p>`
         };
 
         return user.updateOne({ resetPasswordLink: token }, (err, success) => {
@@ -177,34 +177,3 @@ exports.socialLogin = async (req, res) => {
     }
 };
 
-// exports.socialLogin = (req, res) => {
-//     console.log('social login req.body', req.body);
-
-// // try signup by finding user with req.email
-// let user = User.findOne({ email: req.body.email }, (err, user) => {
-//     if (err || !user) {
-//         // create a new user and login
-//         user = new User(req.body);
-//         req.profile = user;
-//         user.save();
-//         // generate a token with user id and secret
-//         const token = jwt.sign({ _id: user._id, iss: process.env.APP_NAME }, process.env.JWT_SECRET);
-//         res.cookie('t', token, { expire: new Date() + 9999 });
-//         // return response with user and token to frontend client
-//         const { _id, name, email } = user;
-//         return res.json({ token, user: { _id, name, email } });
-//     } else {
-//         // update existing user with new social info and login
-//         req.profile = user;
-//         user = _.extend(user, req.body);
-//         user.updated = Date.now();
-//         user.save();
-//         // generate a token with user id and secret
-//         const token = jwt.sign({ _id: user._id, iss: process.env.APP_NAME }, process.env.JWT_SECRET);
-//         res.cookie('t', token, { expire: new Date() + 9999 });
-//         // return response with user and token to frontend client
-//         const { _id, name, email } = user;
-//         return res.json({ token, user: { _id, name, email } });
-//     }
-// });
-// };
