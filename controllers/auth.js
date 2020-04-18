@@ -79,10 +79,17 @@ exports.forgotPassword = (req, res) => {
             subject: 'Password Reset Instructions',
             text: `Please use the following link to reset your password: ${
                 process.env.CLIENT_URL
+<<<<<<< HEAD
             }/reset-password/${token}`,
             html: `<p>Please use the following link to reset your password:</p> <p>${
                 process.env.CLIENT_URL
             }/reset-password/${token}</p>`
+=======
+                }/reset-password/${token}`,
+            html: `<p>Please use the following link to reset your password:</p> <p>${
+                process.env.CLIENT_URL
+                }/reset-password/${token}</p>`
+>>>>>>> 5a29abcdc912da26fea49c54d7c379b8f8b039b4
         };
 
         return user.updateOne({ resetPasswordLink: token }, (err, success) => {
@@ -177,6 +184,7 @@ exports.socialLogin = async (req, res) => {
     }
 };
 
+<<<<<<< HEAD
 // exports.socialLogin = (req, res) => {
 //     console.log('social login req.body', req.body);
 
@@ -208,3 +216,5 @@ exports.socialLogin = async (req, res) => {
 //     }
 // });
 // };
+=======
+>>>>>>> 5a29abcdc912da26fea49c54d7c379b8f8b039b4

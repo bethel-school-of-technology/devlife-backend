@@ -21,6 +21,10 @@ mongoose.connection.on("error", err => {
 });
 // bring in routes
 const postRoutes = require("./routes/post");
+<<<<<<< HEAD
+=======
+const eventRoutes = require("./routes/event");
+>>>>>>> 5a29abcdc912da26fea49c54d7c379b8f8b039b4
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/user");
 // apiDocs
@@ -42,6 +46,10 @@ app.use(cookieParser());
 app.use(expressValidator());
 app.use(cors());
 app.use("/api", postRoutes);
+<<<<<<< HEAD
+=======
+app.use("/api", eventRoutes);
+>>>>>>> 5a29abcdc912da26fea49c54d7c379b8f8b039b4
 app.use("/api", authRoutes);
 app.use("/api", userRoutes);
 app.use(function(err, req, res, next) {
